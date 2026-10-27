@@ -26,7 +26,10 @@ import ActionSummary, {
 } from "discourse/models/action-summary";
 import Badge from "discourse/models/badge";
 import type Category from "discourse/models/category";
-import Composer from "discourse/models/composer";
+import Composer, {
+  type ComposerImageSizes,
+  type ComposerMetaData,
+} from "discourse/models/composer";
 import RestModel, {
   type RestModelAttrs,
   type RestModelClass,
@@ -207,10 +210,8 @@ export interface PostFields {
   action_code_who?: unknown;
   /** Custom-field registrations can change the value shape. */
   action_code_path?: unknown;
-  /** TODO(typescript-pending): Composer accepts untyped save options beyond its image-dimension map; narrow when Composer is typed. */
-  imageSizes?: unknown;
-  /** TODO(typescript-pending): Composer metadata is extensible; remove when its metadata contract is typed. */
-  metaData?: (EmberObject & Record<string, unknown>) | null;
+  imageSizes?: ComposerImageSizes;
+  metaData?: ComposerMetaData | null;
   tags?: { id?: number; name: string }[];
   replies?: Post[];
   children?: RestPayload[];
@@ -922,10 +923,9 @@ export default class Post extends RestModel {
 
   override createProperties(): RestPayload {
     // composer only used once, defer the dependency
-    // TODO(typescript-pending): Composer serialization is extensible and has no typed field map; remove when Composer is converted.
-    const data = this.getProperties(
-      Composer.serializedFieldsForCreate() as (keyof this)[]
-    ) as RestPayload & { meta_data?: RestPayload };
+    const data: RestPayload & { meta_data?: RestPayload } = this.getProperties(
+      Composer.serializedFieldsForCreate()
+    );
     data.reply_to_post_number = this.reply_to_post_number;
     data.image_sizes = this.imageSizes;
 
@@ -935,7 +935,8 @@ export default class Post extends RestModel {
     if (metaData) {
       data.meta_data = {};
       Object.keys(metaData).forEach(
-        (key) => (data.meta_data![key] = metaData[key])
+        (key) =>
+          (data.meta_data![key] = (metaData as Record<string, unknown>)[key])
       );
     }
 
