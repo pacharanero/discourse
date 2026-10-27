@@ -18,11 +18,23 @@ module JsonApiKit
 
           attr_reader :join_scope, :join_owner_key, :join_related_key
 
+          def pair_groups(related_by_key)
+            positions = related_by_key.keys.each_with_index.to_h
+            related_keys.transform_values do |keys|
+              keys.sort_by { positions.fetch(it, 0) }.flat_map { related_by_key.fetch(it, []) }
+            end
+          end
+
           def joins = join_scope.where(join_owner_key => owner_values)
 
           def related_keys
-            pairs = joins.pluck(join_owner_key, join_related_key).group_by(&:first)
-            owner_records.to_h { [it, pairs.fetch(owner_value(it), []).map(&:last)] }
+            @related_keys ||=
+              joins
+                .pluck(join_owner_key, join_related_key)
+                .group_by(&:first)
+                .then do |pairs|
+                  owner_records.to_h { [it, pairs.fetch(owner_value(it), []).map(&:last)] }
+                end
           end
         end
       end

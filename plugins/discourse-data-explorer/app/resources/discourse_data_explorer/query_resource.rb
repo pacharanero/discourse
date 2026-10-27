@@ -26,6 +26,7 @@ module DiscourseDataExplorer
 
     has_one :user
     has_many :groups
+    has_one :cached_result
 
     sort :name
     sort :last_run_at

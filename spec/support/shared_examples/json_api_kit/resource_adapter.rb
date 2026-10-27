@@ -45,6 +45,16 @@ RSpec.shared_examples "a resource adapter" do
       end
     end
 
+    context "when the resource scope excludes some requested records" do
+      let(:scoped_to) { scope }
+
+      before { resource.class.scope { restricted_scope } }
+
+      it "returns only the records in the resource scope" do
+        expect(loaded_records).to contain_exactly(record)
+      end
+    end
+
     context "when the request supplies a filter" do
       let(:parameters) { super().merge(filter: { filter_name => filter_value }) }
 

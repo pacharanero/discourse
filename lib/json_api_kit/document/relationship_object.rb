@@ -27,9 +27,18 @@ module JsonApiKit
 
       def links = { self: relationship_url.to_s, related: related_url.to_s }.merge(page_links)
 
-      def relationship_url = owner_url.relationship(name)
+      def relationship_url = owner_url.relationship(name, parameters: link_parameters)
 
-      def related_url = owner_url.related(name)
+      def related_url = owner_url.related(name, parameters: link_parameters)
+
+      def link_parameters
+        @link_parameters ||=
+          if linkage.filtering.empty?
+            {}
+          else
+            { filter: linkage.filtering.transform_keys { glossary.member_name(it).value } }
+          end
+      end
 
       def owner_url = @owner_url ||= urls.for(owner)
 
